@@ -1,6 +1,6 @@
 # 🎭 playwright-demo-py
 
-A production-grade end-to-end test automation framework built with Python, Playwright, and pytest — featuring a fully automated CI/CD pipeline and a live test results dashboard hosted on GitHub Pages.
+A production-grade end-to-end test automation framework built with Python, Playwright, and pytest - featuring a fully automated CI/CD pipeline and a live test results dashboard hosted on GitHub Pages.
 
 🔗 **[Live Dashboard](https://kimeklund13.github.io/playwright-demo-py/)**
 
@@ -10,7 +10,7 @@ A production-grade end-to-end test automation framework built with Python, Playw
 
 This framework demonstrates a complete test automation setup from local execution to CI/CD integration and test management reporting. It is built on the **Page Object Model (POM)** pattern for maintainability, integrated with **Qase TMS** for test case management and result tracking, and ships with a zero-cost reporting pipeline using only GitHub-native tooling.
 
-**Test target:** [the-internet.herokuapp.com](https://the-internet.herokuapp.com) — a purpose-built web automation practice site.
+**Test target:** [the-internet.herokuapp.com](https://the-internet.herokuapp.com) - a purpose-built web automation practice site.
 
 ---
 
@@ -30,14 +30,14 @@ This framework demonstrates a complete test automation setup from local executio
 
 ## Features
 
-- **Cross-browser testing** — Chromium, Firefox, and WebKit via a single workflow input
-- **Multi-environment support** — `--env=dev/stg/prod` CLI flag dynamically sets base URL
-- **Page Object Model** — clean separation of locators, actions, and assertions per page
-- **Pytest markers** — `smoke`, `regression`, `auth` for flexible test scoping
-- **Qase TMS integration** — automated tests linked to Qase test cases by ID; results posted automatically on every CI run
-- **Live dashboard** — pass rate trends, run history, and per-run HTML reports published to GitHub Pages after every run, with no third-party services
-- **Artifact retention** — screenshots, videos, and traces captured on failure; stored as GitHub Actions artifacts for 30 days
-- **Conventional commits** — enforced locally via commitizen and pre-commit hooks
+- **Cross-browser testing** - Chromium, Firefox, and WebKit via a single workflow input
+- **Multi-environment support** - `--env=dev/stg/prod` CLI flag dynamically sets base URL
+- **Page Object Model** - clean separation of locators, actions, and assertions per page
+- **Pytest markers** - `smoke`, `regression`, `auth` for flexible test scoping
+- **Qase TMS integration** - automated tests linked to Qase test cases by ID; results posted automatically on every CI run
+- **Live dashboard** - pass rate trends, run history, and per-run HTML reports published to GitHub Pages after every run, with no third-party services
+- **Artifact retention** - screenshots, videos, and traces captured on failure; stored as GitHub Actions artifacts for 30 days
+- **Conventional commits** - enforced locally via commitizen and pre-commit hooks
 
 ---
 
@@ -45,7 +45,7 @@ This framework demonstrates a complete test automation setup from local executio
 
 ```
 playwright-demo-py/
-├── pages/                        # Page Object Model — one class per page
+├── pages/                        # Page Object Model - one class per page
 │   ├── base_page.py              # Shared locator wrappers and assertions
 │   ├── login_page.py             # LoginPage(BasePage)
 │   └── home_page.py              # HomePage(BasePage)
@@ -94,7 +94,7 @@ pre-commit install --hook-type commit-msg
 
 ### Environment variables (local)
 
-Create a `.env` file in the project root — this file is gitignored:
+Create a `.env` file in the project root - this file is gitignored:
 
 ```bash
 QASE_API_TOKEN=your_personal_token_here
@@ -105,6 +105,8 @@ QASE_PROJECT=KIM
 
 ## Running Tests
 
+Default browser is Chromium, default environment is `prod`. Both can be overridden per run.
+
 ```bash
 # Run all tests
 pytest
@@ -112,24 +114,53 @@ pytest
 # Run by marker
 pytest -m smoke
 pytest -m regression
+pytest -m "smoke or regression"
 
-# Run against a specific environment
-pytest --env=stg -m smoke
+# Run a specific test file
+pytest tests/test_login.py
+
+# Run a specific test by name
+pytest tests/test_login.py::TestLogin::test_valid_login
+
+# Run headed (visible browser - useful for debugging)
+pytest -m smoke --headed
 
 # Run in a specific browser
-pytest --browser=firefox
+pytest -m smoke --browser=firefox
+pytest -m smoke --browser=webkit
 
-# Run headed (visible browser)
-pytest --headed
+# Run against a specific environment
+pytest -m smoke --env=stg
+pytest -m regression --env=prod
 
-# Run in parallel
-pytest -n 4
+# Combine browser + environment + marker
+pytest -m smoke --browser=firefox --env=stg
 
-# Run and post results to Qase TMS
-pytest --qase-mode=testops \
-       --qase-testops-api-token=$QASE_API_TOKEN \
-       --qase-testops-project=$QASE_PROJECT
+# Run with verbose output (shows each test name + result)
+pytest -m smoke -v
+
+# Parallelization - run tests across multiple workers
+pytest -n 4        # 4 parallel workers
+pytest -n auto     # uses all available CPU cores (fastest)
+
+# Parallel + marker + browser
+pytest -m regression -n auto --browser=chromium
 ```
+
+### Qase TMS reporting (via shell alias)
+
+```bash
+# Run smoke tests and post results to Qase
+pytest-qase -m smoke
+
+# Full regression run against staging, reported to Qase
+pytest-qase -m regression --env=stg
+
+# Parallel regression run with Qase reporting
+pytest-qase -m regression -n auto
+```
+
+> `pytest-qase` is a shell alias defined in `~/.zshrc`. See [Local Shell Alias](#local-shell-alias-recommended) below.
 
 ---
 
@@ -148,7 +179,7 @@ def test_valid_login(self, login_page):
     login_page.assert_login_successful()
 ```
 
-On each CI run, results are automatically posted to the linked Qase test case — no manual result entry required. Test runs can be scoped to a Qase test plan using `--qase-testops-plan-id`.
+On each CI run, results are automatically posted to the linked Qase test case - no manual result entry required. Test runs can be scoped to a Qase test plan using `--qase-testops-plan-id`.
 
 ---
 
@@ -219,3 +250,29 @@ Example: feat(login): add invalid password test
 ```
 
 Use `cz commit` for an interactive prompt that builds the message for you.
+
+---
+
+## Local Shell Alias (Recommended)
+
+To avoid passing Qase flags on every run, add this alias to your `~/.zshrc`:
+
+```bash
+alias pytest-qase='pytest --qase-mode=testops --qase-testops-api-token=$QASE_API_TOKEN'
+```
+
+Apply it to your current session:
+
+```bash
+source ~/.zshrc
+```
+
+Then use whichever fits your workflow:
+
+```bash
+pytest -m smoke                       # fast local run, no Qase reporting
+pytest-qase -m smoke                  # run smoke tests + post results to Qase
+pytest-qase -m regression --env=stg   # regression run against staging + Qase
+```
+
+This keeps local development fast and Qase reporting intentional - CI always posts results via the workflow, so you're never missing data in Qase even if you skip the alias locally.

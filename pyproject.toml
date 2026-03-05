@@ -13,6 +13,7 @@ markers = [
 
 addopts = """
   --browser=chromium
+  --numprocesses=1
   --screenshot=only-on-failure
   --video=retain-on-failure
   --tracing=retain-on-failure
