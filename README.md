@@ -1,7 +1,6 @@
 # 🎭 playwright-demo-py
 
 Python Playwright test framework with automated GitHub Actions CI and a live dashboard on GitHub Pages.
-Python port of [playwright-demo-js](https://github.com/jay-yeluru/playwright-demo-js).
 
 **Test site:** [the-internet.herokuapp.com](https://the-internet.herokuapp.com)
 
@@ -163,7 +162,7 @@ publish-report.yml  (triggers automatically after run-tests.yml)
   → run generate_dashboard.py → updates index.html + history.json
   → commit + push to gh-pages
     ↓
-Live dashboard at https://<you>.github.io/<repo>/
+Live dashboard at https://kimeklund13.github.io/playwright-demo-py/
 ```
 
 ### GitHub Pages setup (one-time)
