@@ -1,0 +1,33 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Markers let you run subsets of tests (like XCUITest's @testCategory)
+markers = [
+    "smoke: quick sanity checks — run these first",
+    "regression: full regression suite",
+    "auth: authentication-related tests",
+    "checkout: checkout flow tests",
+]
+
+# Playwright-specific options
+# Override any of these from the CLI:
+#   pytest --browser=firefox --headed --slowmo=500
+addopts = """
+  --browser=chromium
+  --screenshot=only-on-failure
+  --video=retain-on-failure
+  --tracing=retain-on-failure
+  --output=test-artifacts
+"""
+
+[project]
+name = "playwright-demo-py"
+version = "0.1.0"
+requires-python = ">=3.11"
+
+[project.dependencies]
+# Install via: pip install -r requirements.txt
+# (pyproject.toml lists them here for reference)

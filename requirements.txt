@@ -1,0 +1,6 @@
+pytest
+pytest-playwright
+pytest-html          # local HTML reports (like Playwright's built-in HTML reporter)
+pytest-json-report   # JSON output — used by the dashboard generator
+pytest-xdist         # parallel test execution (like XCUITest parallel runners)
+python-dotenv        # load .env files for secrets/config

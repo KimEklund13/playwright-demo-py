@@ -1,0 +1,59 @@
+name: Publish Report to GitHub Pages
+
+on:
+  workflow_run:
+    workflows: ["Run Playwright Tests"]
+    types: [completed]  # triggers whether tests pass OR fail
+
+permissions:
+  contents: write   # needed to push to gh-pages branch
+  pages: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Fetch dashboard generator script
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: _source
+          sparse-checkout: .github/scripts/generate_dashboard.py
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download reports artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-reports-${{ github.event.workflow_run.id }}
+          path: downloaded-reports
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Generate dashboard
+        env:
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          BROWSER: ${{ github.event.workflow_run.name }}
+          REPORT_PATH: downloaded-reports
+          KEEP_RUNS: "10"
+        run: python _source/.github/scripts/generate_dashboard.py
+
+      - name: Commit and push dashboard
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "dashboard: update run ${{ github.event.workflow_run.id }}"
+          git push origin gh-pages
