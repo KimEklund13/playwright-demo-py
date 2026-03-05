@@ -6,3 +6,4 @@ pytest-xdist         # parallel test execution (like XCUITest parallel runners)
 python-dotenv        # load .env files for secrets/config
 qase-pytest
 pre-commit
+commitizen

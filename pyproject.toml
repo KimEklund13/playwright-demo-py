@@ -4,7 +4,6 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 
-# Markers let you run subsets of tests (like XCUITest's @testCategory)
 markers = [
     "smoke: quick sanity checks — run these first",
     "regression: full regression suite",
@@ -12,9 +11,6 @@ markers = [
     "checkout: checkout flow tests",
 ]
 
-# Playwright-specific options
-# Override any of these from the CLI:
-#   pytest --browser=firefox --headed --slowmo=500
 addopts = """
   --browser=chromium
   --screenshot=only-on-failure
@@ -28,6 +24,29 @@ name = "playwright-demo-py"
 version = "0.1.0"
 requires-python = ">=3.11"
 
-[project.dependencies]
-# Install via: pip install -r requirements.txt
-# (pyproject.toml lists them here for reference)
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+tag_format = "v$version"
+
+[tool.commitizen.customize]
+bump_pattern = "^(feat|fix|refactor|perf)"
+schema_pattern = "(feat|fix|chore|docs|refactor|test|ci|style|perf)(\\(.+\\))?!?:(\\s.*)"
+message_template = "{{change_type}}{{scope}}: {{message}}"
+example = "feat: add login page tests"
+schema = "<type>(<optional scope>): <description>"
+info = """
+Conventional Commit Types:
+─────────────────────────
+feat:      new feature
+fix:       bug fix
+chore:     maintenance, deps, config
+docs:      documentation only
+refactor:  restructure, no behavior change
+test:      adding or updating tests
+ci:        GitHub Actions / CI config
+style:     formatting, no logic change
+perf:      performance improvement
+
+Example: feat(login): add invalid password test
+"""

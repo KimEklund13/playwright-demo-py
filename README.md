@@ -1,25 +1,43 @@
 # 🎭 playwright-demo-py
 
-Python Playwright test framework with automated GitHub Actions CI and a live dashboard on GitHub Pages.
+A production-grade end-to-end test automation framework built with Python, Playwright, and pytest — featuring a fully automated CI/CD pipeline and a live test results dashboard hosted on GitHub Pages.
 
-**Test site:** [the-internet.herokuapp.com](https://the-internet.herokuapp.com)
+🔗 **[Live Dashboard](https://kimeklund13.github.io/playwright-demo-py/)**
 
 ---
 
-## Architecture: How this maps to your XCUITest world
+## Overview
 
-```
-XCUITest                           Playwright/pytest equivalent
-──────────────────────────────     ──────────────────────────────
-XCTestCase subclass                BasePage (pages/base_page.py)
-Screen-specific helper class       LoginPage, HomePage (pages/*.py)
-setUp() / tearDown()               fixtures in conftest.py
-XCUIApplication()                  page (injected by pytest-playwright)
-XCTAssertTrue / XCTAssertEqual     expect(locator).to_be_visible() etc.
-@testCase("smoke")                 @pytest.mark.smoke
-Test scheme / test plan            pytest -m smoke / -m regression
-Parallel test execution            pytest -n auto (pytest-xdist)
-```
+This framework demonstrates a complete test automation setup from local execution to CI/CD integration and test management reporting. It is built on the **Page Object Model (POM)** pattern for maintainability, integrated with **Qase TMS** for test case management and result tracking, and ships with a zero-cost reporting pipeline using only GitHub-native tooling.
+
+**Test target:** [the-internet.herokuapp.com](https://the-internet.herokuapp.com) — a purpose-built web automation practice site.
+
+---
+
+## Tech Stack
+
+| Tool | Purpose |
+|---|---|
+| [Playwright](https://playwright.dev/python/) | Browser automation and E2E testing |
+| [pytest](https://pytest.org) | Test runner and fixture management |
+| [Qase TMS](https://qase.io) | Test case management and result reporting |
+| [GitHub Actions](https://github.com/features/actions) | CI/CD pipeline |
+| [GitHub Pages](https://pages.github.com) | Live test dashboard hosting |
+| [Commitizen](https://commitizen-tools.github.io/commitizen/) | Conventional commit enforcement |
+| [pre-commit](https://pre-commit.com) | Git hook management |
+
+---
+
+## Features
+
+- **Cross-browser testing** — Chromium, Firefox, and WebKit via a single workflow input
+- **Multi-environment support** — `--env=dev/stg/prod` CLI flag dynamically sets base URL
+- **Page Object Model** — clean separation of locators, actions, and assertions per page
+- **Pytest markers** — `smoke`, `regression`, `auth` for flexible test scoping
+- **Qase TMS integration** — automated tests linked to Qase test cases by ID; results posted automatically on every CI run
+- **Live dashboard** — pass rate trends, run history, and per-run HTML reports published to GitHub Pages after every run, with no third-party services
+- **Artifact retention** — screenshots, videos, and traces captured on failure; stored as GitHub Actions artifacts for 30 days
+- **Conventional commits** — enforced locally via commitizen and pre-commit hooks
 
 ---
 
@@ -27,173 +45,177 @@ Parallel test execution            pytest -n auto (pytest-xdist)
 
 ```
 playwright-demo-py/
-├── pages/                        # Page Object Model — one file per screen
-│   ├── base_page.py              # Wrapper methods: click, fill, assert, etc.
+├── pages/                        # Page Object Model — one class per page
+│   ├── base_page.py              # Shared locator wrappers and assertions
 │   ├── login_page.py             # LoginPage(BasePage)
 │   └── home_page.py              # HomePage(BasePage)
 │
-├── tests/                        # Test files — mirror your pages/ structure
-│   └── test_login.py             # class TestLogin — groups related tests
+├── tests/                        # Test suites organized by feature
+│   └── test_login.py             # Authentication test cases
 │
-├── utils/                        # Shared helpers (data generators, API clients, etc.)
-│   └── __init__.py
+├── utils/                        # Shared helpers: data factories, API clients
 │
-├── conftest.py                   # Fixtures: page objects, auth state, browser config
-├── pyproject.toml                # pytest config, markers, Playwright options
-├── requirements.txt
+├── conftest.py                   # Fixtures, env selector, browser context config
+├── pyproject.toml                # pytest, commitizen, and project config
+├── requirements.txt              # Python dependencies
 │
 └── .github/
     ├── workflows/
-    │   ├── run-tests.yml         # Trigger tests → upload artifacts
-    │   └── publish-report.yml   # Download artifacts → generate dashboard → push gh-pages
+    │   ├── run-tests.yml         # Runs tests on demand; uploads report artifacts
+    │   └── publish-report.yml   # Publishes dashboard to GitHub Pages post-run
     └── scripts/
-        └── generate_dashboard.py # Reads JSON results, builds HTML dashboard
+        └── generate_dashboard.py # Builds HTML dashboard from JSON test history
 ```
 
 ---
 
-## OOP Architecture: The Page Object Model
+## Getting Started
 
-### Why OOP here?
+### Prerequisites
 
-In XCUITest you probably have helper functions per screen. POM formalizes this:
-each screen is a **class**, elements are **instance variables**, interactions are **methods**.
+- Python 3.11+
+- A virtual environment (recommended)
 
-```
-BasePage          ← common wrappers (click, fill, wait, assert)
-  └── LoginPage   ← /login elements + actions + assertions
-  └── HomePage    ← /secure elements + actions + assertions
-  └── ...         ← add a new class for every new screen
-```
-
-### Adding a new page
-
-1. Create `pages/my_new_page.py`
-2. Class inherits `BasePage`
-3. Define locators in `__init__`
-4. Add action methods + assertion methods
-5. Add fixture to `conftest.py`
-6. Use in `tests/test_my_feature.py`
-
----
-
-## Quick Start
+### Installation
 
 ```bash
-# Install
+git clone https://github.com/kimeklund13/playwright-demo-py.git
+cd playwright-demo-py
+
+python3 -m venv .venv
+source .venv/bin/activate
+
 pip install -r requirements.txt
 playwright install chromium
 
+# Install git hooks (enforces conventional commit messages)
+pre-commit install --hook-type commit-msg
+```
+
+### Environment variables (local)
+
+Create a `.env` file in the project root — this file is gitignored:
+
+```bash
+QASE_API_TOKEN=your_personal_token_here
+QASE_PROJECT=KIM
+```
+
+---
+
+## Running Tests
+
+```bash
 # Run all tests
 pytest
 
-# Run smoke tests only
+# Run by marker
 pytest -m smoke
+pytest -m regression
 
-# Run headed (watch the browser)
-pytest --headed
+# Run against a specific environment
+pytest --env=stg -m smoke
 
 # Run in a specific browser
 pytest --browser=firefox
 
-# Run in parallel (4 workers)
+# Run headed (visible browser)
+pytest --headed
+
+# Run in parallel
 pytest -n 4
 
-# View the HTML report
-open reports/index.html
+# Run and post results to Qase TMS
+pytest --qase-mode=testops \
+       --qase-testops-api-token=$QASE_API_TOKEN \
+       --qase-testops-project=$QASE_PROJECT
 ```
 
 ---
 
-## Key Playwright Concepts
+## Qase TMS Integration
 
-### Locators (how you find elements)
-
-```python
-page.get_by_label("Username")          # find by <label> text — preferred
-page.get_by_role("button", name="Login") # find by ARIA role
-page.get_by_test_id("submit")          # find by data-testid attr
-page.locator("#flash")                 # CSS selector fallback
-page.locator("text=Welcome")           # find by text content
-```
-
-### Assertions (async-safe, auto-retrying)
+Test cases are created and managed in Qase, then linked to automated tests via decorator:
 
 ```python
-from playwright.sync_api import expect
+from qase.pytest import qase
 
-expect(locator).to_be_visible()        # element is on screen
-expect(locator).to_have_text("Hello")  # exact text match
-expect(locator).to_contain_text("He")  # partial match
-expect(page).to_have_url(re.compile("/secure"))
-```
-
-Playwright's `expect()` **auto-retries** for up to 5 seconds by default —
-no need for explicit `wait_for_element` calls in most cases.
-
-### Fixtures (pytest's version of setUp)
-
-```python
-# conftest.py defines this once:
-@pytest.fixture
-def login_page(page: Page) -> LoginPage:
-    return LoginPage(page)
-
-# Any test can request it by name — no import needed:
-def test_something(login_page):   # ← pytest injects it
+@qase.id(1)
+@pytest.mark.smoke
+def test_valid_login(self, login_page):
     login_page.navigate()
+    login_page.login("tomsmith", "SuperSecretPassword!")
+    login_page.assert_login_successful()
 ```
+
+On each CI run, results are automatically posted to the linked Qase test case — no manual result entry required. Test runs can be scoped to a Qase test plan using `--qase-testops-plan-id`.
 
 ---
 
 ## CI/CD Pipeline
 
+Triggered manually via `workflow_dispatch` with selectable browser and environment inputs.
+
 ```
-Manual trigger (workflow_dispatch)
-    ↓
 run-tests.yml
-  → install Python + Playwright
-  → run pytest (selected browser)
-  → upload reports/ as artifact
-    ↓
-publish-report.yml  (triggers automatically after run-tests.yml)
-  → checkout gh-pages branch
-  → download artifact
-  → run generate_dashboard.py → updates index.html + history.json
-  → commit + push to gh-pages
-    ↓
-Live dashboard at https://kimeklund13.github.io/playwright-demo-py/
+  → Install Python + Playwright
+  → Run pytest (selected browser + environment)
+  → Upload reports/ and test-artifacts/ as artifacts
+      ↓
+publish-report.yml  (auto-triggers on completion)
+  → Checkout gh-pages branch
+  → Download report artifacts
+  → Regenerate dashboard with updated run history
+  → Commit and push to gh-pages
+      ↓
+https://kimeklund13.github.io/playwright-demo-py/
 ```
 
-### GitHub Pages setup (one-time)
+### Required GitHub secrets
 
-```bash
-git switch --orphan gh-pages
-git commit --allow-empty -m "init: gh-pages"
-git push origin gh-pages
-git checkout main
-```
-
-Then: Settings → Pages → Source: `gh-pages` branch, `/ (root)`
-And: Settings → Actions → General → Workflow permissions → Read and write
+| Secret | Description |
+|---|---|
+| `QASE_API_TOKEN` | Qase API token (Settings → Access Tokens) |
+| `QASE_PROJECT` | Qase project code (`KIM`) |
 
 ---
 
-## Adding More Tests
+## Extending the Framework
 
-As you add screens to test, keep this pattern:
+To add coverage for a new page or feature:
+
+1. Create `pages/feature_page.py` extending `BasePage`
+2. Define locators, action methods, and assertions
+3. Add a fixture to `conftest.py`
+4. Create `tests/test_feature.py` with appropriate markers
+5. Create corresponding test cases in Qase and link via `@qase.id()`
 
 ```
 pages/
-  checkout_page.py     → CheckoutPage(BasePage)
-  cart_page.py         → CartPage(BasePage)
+  checkout_page.py   → CheckoutPage(BasePage)
 
 tests/
-  test_checkout.py     → class TestCheckout
-  test_cart.py         → class TestCart
+  test_checkout.py   → class TestCheckout
 ```
 
-Use `utils/` for shared non-UI helpers:
-- `utils/api_client.py`   — API calls to set up test data
-- `utils/data_factory.py` — random data generators
-- `utils/db_helpers.py`   — direct DB queries if needed
+---
+
+## Commit Convention
+
+This repo enforces [Conventional Commits](https://www.conventionalcommits.org/). The pre-commit hook will block non-conforming messages and display the reference:
+
+```
+feat:      new feature
+fix:       bug fix
+chore:     maintenance, deps, config
+docs:      documentation only
+refactor:  restructure, no behavior change
+test:      adding or updating tests
+ci:        GitHub Actions / CI config
+style:     formatting, no logic change
+perf:      performance improvement
+
+Example: feat(login): add invalid password test
+```
+
+Use `cz commit` for an interactive prompt that builds the message for you.
