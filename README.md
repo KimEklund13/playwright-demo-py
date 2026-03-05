@@ -147,20 +147,26 @@ pytest -n auto     # uses all available CPU cores (fastest)
 pytest -m regression -n auto --browser=chromium
 ```
 
-### Qase TMS reporting (via shell alias)
+### Qase TMS reporting
 
+Two options for running with Qase result posting:
+
+**Option 1 - Explicit flags** (works out of the box, reads token from `.env`):
 ```bash
-# Run smoke tests and post results to Qase
-pytest-qase -m smoke
-
-# Full regression run against staging, reported to Qase
-pytest-qase -m regression --env=stg
-
-# Parallel regression run with Qase reporting
-pytest-qase -m regression -n auto
+pytest -m smoke \
+  --qase-mode=testops \
+  --qase-testops-api-token=$QASE_API_TOKEN \
+  --qase-testops-project=KIM
 ```
 
-> `pytest-qase` is a shell alias defined in `~/.zshrc`. See [Local Shell Alias](#local-shell-alias-recommended) below.
+**Option 2 - Shell alias** (cleaner, recommended for frequent use):
+
+Set up once in `~/.zshrc` (see [Local Shell Alias](#local-shell-alias-recommended) below), then:
+```bash
+pytest-qase -m smoke
+pytest-qase -m regression --env=stg
+pytest-qase -m regression -n auto
+```
 
 ---
 
@@ -255,24 +261,35 @@ Use `cz commit` for an interactive prompt that builds the message for you.
 
 ## Local Shell Alias (Recommended)
 
-To avoid passing Qase flags on every run, add this alias to your `~/.zshrc`:
+For frequent Qase reporting, set up a shell alias so you don't have to pass flags every time.
 
+**1. Export your Qase API token in `~/.zshrc`:**
 ```bash
-alias pytest-qase='pytest --qase-mode=testops --qase-testops-api-token=$QASE_API_TOKEN'
+export QASE_API_TOKEN=your_token_here
 ```
 
-Apply it to your current session:
+**2. Add the alias in `~/.zshrc`:**
+```bash
+alias pytest-qase='pytest --qase-mode=testops --qase-testops-api-token=$QASE_API_TOKEN --qase-testops-project=KIM'
+```
 
+**3. Apply to your current session:**
 ```bash
 source ~/.zshrc
 ```
 
-Then use whichever fits your workflow:
+**4. Verify the token is set:**
+```bash
+echo $QASE_API_TOKEN
+```
+
+After setup, use whichever command fits your workflow:
 
 ```bash
 pytest -m smoke                       # fast local run, no Qase reporting
-pytest-qase -m smoke                  # run smoke tests + post results to Qase
-pytest-qase -m regression --env=stg   # regression run against staging + Qase
+pytest-qase -m smoke                  # smoke tests + post results to Qase
+pytest-qase -m regression --env=stg   # regression against staging + Qase
+pytest-qase -m regression -n auto     # parallel regression + Qase
 ```
 
-This keeps local development fast and Qase reporting intentional - CI always posts results via the workflow, so you're never missing data in Qase even if you skip the alias locally.
+The token lives in `~/.zshrc` rather than `.env` so it is available to the shell alias. CI uses GitHub Actions secrets and does not rely on this setup.
