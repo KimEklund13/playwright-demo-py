@@ -4,3 +4,4 @@ pytest-html          # local HTML reports (like Playwright's built-in HTML repor
 pytest-json-report   # JSON output — used by the dashboard generator
 pytest-xdist         # parallel test execution (like XCUITest parallel runners)
 python-dotenv        # load .env files for secrets/config
+qase-pytest
